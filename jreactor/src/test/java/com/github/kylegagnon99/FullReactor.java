@@ -23,7 +23,7 @@ public class FullReactor extends Reactor {
     }
 
     @Override
-    protected void processFailMsg(String failMsgStr, int destId) {
+    protected void processFailMsg(String failMsgStr, long destId) {
         logger.info("Failed to deliver to {}", destId);
     }
 

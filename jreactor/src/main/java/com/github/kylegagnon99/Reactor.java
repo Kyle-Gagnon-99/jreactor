@@ -2,6 +2,9 @@ package com.github.kylegagnon99;
 
 import java.nio.ByteBuffer;
 
+import com.github.kylegagnon99.ReactorIdOuterClass.ReactorId;
+import com.google.protobuf.InvalidProtocolBufferException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.SocketType;
@@ -34,7 +37,9 @@ public abstract class Reactor extends Thread {
 
         this.rid = rid;
 
-        byte[] reactorIdBytes = ByteBuffer.allocate(4).putInt(rid).array();
+        ReactorIdOuterClass.ReactorId reactorIdObj = ReactorIdOuterClass.ReactorId.newBuilder().setRid(rid).build();
+        byte[] reactorIdBytes = reactorIdObj.toByteArray();
+
         dealerSocket = context.createSocket(socketType);
         dealerSocket.setIdentity(reactorIdBytes);
 
@@ -57,7 +62,9 @@ public abstract class Reactor extends Thread {
 
         this.rid = rid;
 
-        byte[] reactorIdBytes = ByteBuffer.allocate(4).putInt(rid).array();
+        ReactorId reactorIdObj = ReactorId.newBuilder().setRid(rid).build();
+        byte[] reactorIdBytes = reactorIdObj.toByteArray();
+
         dealerSocket = context.createSocket(socketType);
         dealerSocket.setIdentity(reactorIdBytes);
 
@@ -75,7 +82,9 @@ public abstract class Reactor extends Thread {
      * @param message The message to send
      */
     public void sendMessage(int destRid, String message) {
-        byte[] destRidBytes = ByteBuffer.allocate(4).putInt(destRid).array();
+
+        ReactorId reactorIdObj = ReactorId.newBuilder().setRid(destRid).build();
+        byte[] destRidBytes = reactorIdObj.toByteArray();
 
         dealerSocket.send(destRidBytes, ZMQ.SNDMORE);
         dealerSocket.send(message.getBytes(ZMQ.CHARSET));
@@ -101,8 +110,14 @@ public abstract class Reactor extends Thread {
 
             if(messageString.equals(MessageTypes.FAIL_TO_DELIVER.value)) {
                 destMsg = dealerSocket.recv();
-                int destMsgInt = ByteBuffer.wrap(destMsg).getInt();
-                processFailMsg(messageString, destMsgInt);
+                ReactorId destReactorIdObj = null;
+                try {
+                    destReactorIdObj = ReactorId.parseFrom(destMsg);
+                } catch (InvalidProtocolBufferException e) {
+                    e.printStackTrace();
+                }
+
+                processFailMsg(messageString, destReactorIdObj.getRid());
             } else {
                 consumeMsg(messageString);
             }
@@ -146,7 +161,7 @@ public abstract class Reactor extends Thread {
      * @param failMsgStr The failure message
      * @param destId Where it was supposed to go
      */
-    protected abstract void processFailMsg(String failMsgStr, int destId);
+    protected abstract void processFailMsg(String failMsgStr, long destId);
 
 
 }
