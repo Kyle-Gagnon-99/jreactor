@@ -7,10 +7,10 @@ class AppTest {
         EventService evService = new EventService(true);
         evService.start();
 
-        FullReactor fullReactor = new FullReactor(10);
-        fullReactor.start();
+        //FullReactor fullReactor = new FullReactor(5);
+        //fullReactor.start();
 
-        fullReactor.sendMessage(5, "Hello World!");
+        //fullReactor.sendMessage(5, "Hello World!");
 
     }
 

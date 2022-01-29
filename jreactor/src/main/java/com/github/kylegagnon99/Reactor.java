@@ -1,7 +1,5 @@
 package com.github.kylegagnon99;
 
-import java.nio.ByteBuffer;
-
 import com.github.kylegagnon99.ReactorIdOuterClass.ReactorId;
 import com.google.protobuf.InvalidProtocolBufferException;
 
@@ -13,6 +11,10 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMQException;
 import org.zeromq.ZMQ.Socket;
 
+/**
+ * A class that can send messages and react to incoming ones. The logic on what to do with a message
+ * must be implemented along with implementing what happens on a failed to deliver message.
+ */
 public abstract class Reactor extends Thread {
 
     Logger logger = LoggerFactory.getLogger(this.getClass());

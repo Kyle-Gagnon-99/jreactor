@@ -8,6 +8,10 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMQException;
 import org.zeromq.ZMQ.Socket;
 
+/**
+ * Starts the service that will act as the router for all messages connected to this
+ * binded endpoint.
+ */
 public class EventService extends Thread {
 
     Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -73,7 +77,7 @@ public class EventService extends Thread {
     }
 
     /**
-     * Starts the event service by listening on the ROUTER port
+     * Starts the event service by listening at the specified address
      */
     @Override
     public void run() {
