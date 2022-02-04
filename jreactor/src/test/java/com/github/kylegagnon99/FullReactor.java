@@ -16,15 +16,18 @@ public class FullReactor extends Reactor {
     }
 
     @Override
-    protected void consumeMsg(String message) {
-
-        logger.info("Consume Message from Full Reactor {} with a message of {}", getRid(), message);
+    protected void consumeMsg(byte[] message) {
+        String messageString = new String(message);
+        logger.info("Consume Message from Full Reactor {} with a message of {}", getRid(), messageString);
 
     }
 
     @Override
-    protected void processFailMsg(String failMsgStr, long destId) {
-        logger.info("Failed to deliver to {}", destId);
+    protected void processFailMsg(String failMsgStr, long destRid, int numOfAttempts, byte[] originalMessage) {
+        logger.info("Failed to deliver to {}", destRid);
+        if(numOfAttempts <= 3) {
+            resendMessage(destRid, numOfAttempts, originalMessage);
+        }
     }
 
 }

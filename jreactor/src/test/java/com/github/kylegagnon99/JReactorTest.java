@@ -7,10 +7,12 @@ class AppTest {
         EventService evService = new EventService(true);
         evService.start();
 
-        //FullReactor fullReactor = new FullReactor(5);
-        //fullReactor.start();
+        FullReactor fullReactor = new FullReactor(5);
+        fullReactor.start();
 
-        //fullReactor.sendMessage(5, "Hello World!");
+        String strToSend = "Hello World!";
+
+        fullReactor.sendMessage(7, strToSend.getBytes());
 
     }
 

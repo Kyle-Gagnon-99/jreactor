@@ -1,5 +1,8 @@
 package com.github.kylegagnon99;
 
+import com.github.kylegagnon99.MsgAttemptsOuterClass.MsgAttempts;
+import com.google.protobuf.InvalidProtocolBufferException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.SocketType;
@@ -59,7 +62,7 @@ public class EventService extends Thread {
      * start the thread.
      *
      * @param showBindingFailedMsg Whether or not to show a debug message that the binding of the port failed
-     * @param p_socketAddr The socket address to bind to
+     * @param socketAddress The socket address to bind to
      */
     public EventService(boolean showBindingFailedMsg, String socketAddress) {
 
@@ -91,13 +94,14 @@ public class EventService extends Thread {
             }
 
             byte[] destMsg = routerSocket.recv();
+            byte[] numOfAttemptsMsg = routerSocket.recv();
             byte[] message = routerSocket.recv();
 
             try {
                 passMessage(destMsg, message);
             } catch(ZMQException exception) {
                 logger.warn(exception.toString());
-                sendFailMsg(sourceMsg, destMsg);
+                sendFailMessage(sourceMsg, destMsg, numOfAttemptsMsg, message);
             }
 
         }
@@ -120,14 +124,31 @@ public class EventService extends Thread {
      * Sends a failed message back to where it came from if the router can't find the client
      * @param sourceMsg Where the message came from
      * @param destMsg Where it was supposed to go
+     * @param numOfAttempts The number of attempts of sending this message
+     * @param message The message itself
      */
-    private void sendFailMsg(byte[] sourceMsg, byte[] destMsg) {
+    private void sendFailMessage(byte[] sourceMsg, byte[] destMsg, byte[] numOfAttempts, byte[] message) {
+
+        MsgAttempts incomingMsgAttemptsObj = null;
+        try {
+            incomingMsgAttemptsObj = MsgAttempts.parseFrom(numOfAttempts);
+        } catch (InvalidProtocolBufferException e) {
+            e.printStackTrace();
+        }
+
+        int numOfAttemptsInt = incomingMsgAttemptsObj.getNumOfAttempts() + 1;
+        logger.debug("Number of Attempts: {}", numOfAttemptsInt);
+
+        MsgAttempts outgoingMsgAttemptsObj = MsgAttempts.newBuilder().setNumOfAttempts(numOfAttemptsInt).build();
+        byte[] outgoingMsgAttemptsArray = outgoingMsgAttemptsObj.toByteArray();
 
         String failMsgString = MessageTypes.FAIL_TO_DELIVER.value;
 
         routerSocket.send(sourceMsg, ZMQ.SNDMORE);
         routerSocket.send(failMsgString.getBytes(ZMQ.CHARSET), ZMQ.SNDMORE);
-        routerSocket.send(destMsg);
+        routerSocket.send(destMsg, ZMQ.SNDMORE);
+        routerSocket.send(outgoingMsgAttemptsArray, ZMQ.SNDMORE);
+        routerSocket.send(message);
 
     }
 
